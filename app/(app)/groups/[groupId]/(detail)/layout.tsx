@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getGroupById, getGroupMembers } from '@/lib/data/groups'
+import { getGroupById, getGroupMembers, getGroupInvitations } from '@/lib/data/groups'
 import { getCurrentUser } from '@/lib/data/profiles'
 import { Avatar } from '@/components/ui/avatar'
 import { GroupSettingsDrawer } from '@/components/groups/group-settings-drawer'
@@ -14,9 +14,10 @@ export default async function GroupLayout({
 }) {
   const { groupId } = await params
 
-  const [group, members, { user }] = await Promise.all([
+  const [group, members, invitations, { user }] = await Promise.all([
     getGroupById(groupId),
     getGroupMembers(groupId),
+    getGroupInvitations(groupId),
     getCurrentUser(),
   ])
   if (!group) notFound()
@@ -54,6 +55,7 @@ export default async function GroupLayout({
             groupId={groupId}
             groupName={group.name}
             members={membersForDrawer}
+            invitations={invitations}
             currentUserId={user.id}
             isOwner={isOwner}
           />
