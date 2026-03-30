@@ -31,14 +31,14 @@ export default async function Home() {
       <div className="relative z-10 max-w-md w-full">
         <div className="animate-fade-up">
           <p className="text-xs font-medium tracking-[0.2em] uppercase text-muted mb-4">
-            Expense Splitting App
+            ふたりのための精算アプリ
           </p>
           <h1 className="font-display text-6xl font-800 tracking-tight text-foreground leading-[1.05]">
-            ワリカン
+            Hanbun
           </h1>
           <p className="text-lg text-muted mt-3 leading-relaxed font-light">
-            グループでの支出を<br className="sm:hidden" />
-            簡単に管理・精算
+            日々の買い物やデート、家賃の支払いまで。<br />
+            ふたりの貸し借りをシンプルに。
           </p>
         </div>
 
@@ -52,11 +52,6 @@ export default async function Home() {
             </Button>
           </Link>
         </div>
-
-        <p className="text-xs text-muted/60 mt-12 animate-fade-up stagger-3">
-          友達やグループでの支払いを記録し、<br />
-          誰が誰にいくら払えばいいか一目で分かります。
-        </p>
       </div>
     </div>
   )
