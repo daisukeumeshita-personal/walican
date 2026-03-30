@@ -21,7 +21,7 @@ export async function createExpense(
 ): Promise<ExpenseActionState> {
   const validation = createExpenseSchema.safeParse(data)
   if (!validation.success) {
-    return { error: validation.error.errors[0]?.message || '入力内容を確認してください' }
+    return { error: validation.error.issues[0]?.message || '入力内容を確認してください' }
   }
 
   const supabase = await createClient()
