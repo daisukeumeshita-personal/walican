@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { LogoutButton } from './logout-button'
-import { ProfileNameEditor } from './profile-name-editor'
+import { UserMenu } from './user-menu'
 
 export async function Header() {
   const supabase = await createClient()
@@ -21,10 +20,7 @@ export async function Header() {
         <Link href="/groups" className="font-display text-lg font-700 tracking-tight text-foreground">
           Hanbun
         </Link>
-        <div className="flex items-center gap-4">
-          <ProfileNameEditor displayName={profile?.display_name || user.email || ''} />
-          <LogoutButton />
-        </div>
+        <UserMenu displayName={profile?.display_name || user.email || ''} />
       </div>
     </header>
   )
