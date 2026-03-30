@@ -17,7 +17,7 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/40">
       <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
-        <Link href="/groups" className="font-display text-lg font-700 tracking-tight text-foreground">
+        <Link href="/" className="font-display text-lg font-700 tracking-tight text-foreground">
           Hanbun
         </Link>
         <UserMenu displayName={profile?.display_name || user.email || ''} />
