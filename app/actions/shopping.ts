@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 export async function addShoppingItem(groupId: string, text: string) {
   if (!text.trim()) return { error: '内容を入力してください' }
+  if (text.length > 100) return { error: '100文字以内で入力してください' }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -29,6 +30,8 @@ export async function addShoppingItem(groupId: string, text: string) {
 
 export async function toggleShoppingItem(groupId: string, itemId: string, isChecked: boolean) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const { error } = await supabase
     .from('shopping_items')
@@ -45,6 +48,8 @@ export async function toggleShoppingItem(groupId: string, itemId: string, isChec
 
 export async function deleteShoppingItem(groupId: string, itemId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const { error } = await supabase
     .from('shopping_items')

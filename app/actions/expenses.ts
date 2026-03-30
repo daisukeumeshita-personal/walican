@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { createExpenseSchema } from '@/lib/validations/expense'
 
 export type ExpenseActionState = {
   error?: string
@@ -18,9 +19,25 @@ export async function createExpense(
     splits: { userId: string; amount: number; percentage?: number }[]
   }
 ): Promise<ExpenseActionState> {
+  const validation = createExpenseSchema.safeParse(data)
+  if (!validation.success) {
+    return { error: validation.error.errors[0]?.message || '入力内容を確認してください' }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // paidBy がグループメンバーであることを確認
+  const { data: members } = await supabase
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', groupId)
+
+  const memberIds = members?.map(m => m.user_id) ?? []
+  if (!memberIds.includes(data.paidBy)) {
+    return { error: '無効な支払者が指定されています' }
+  }
 
   // Validate that split amounts sum to total
   const splitTotal = data.splits.reduce((sum, s) => sum + s.amount, 0)
@@ -80,6 +97,7 @@ export async function updateExpense(
   if (!user) redirect('/login')
 
   if (!data.description.trim()) return { error: '内容を入力してください' }
+  if (data.description.length > 100) return { error: '内容は100文字以内で入力してください' }
   if (data.amount <= 0) return { error: '金額を入力してください' }
 
   // 既存のスプリットを取得して割合を保ちながら金額を再計算
@@ -140,6 +158,18 @@ export async function updateExpense(
 
 export async function deleteExpense(groupId: string, expenseId: string): Promise<ExpenseActionState> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: expense } = await supabase
+    .from('expenses')
+    .select('created_by')
+    .eq('id', expenseId)
+    .single()
+
+  if (!expense || expense.created_by !== user.id) {
+    return { error: '削除する権限がありません' }
+  }
 
   const { error } = await supabase
     .from('expenses')

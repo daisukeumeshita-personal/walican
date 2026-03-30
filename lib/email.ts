@@ -7,7 +7,7 @@ export async function sendInvitationEmail(
   inviteUrl: string
 ) {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not set — skipping invitation email to:', to)
+    console.warn('RESEND_API_KEY is not set — skipping invitation email to:', to.replace(/(.{2}).*(@.*)/, '$1***$2'))
     return
   }
 

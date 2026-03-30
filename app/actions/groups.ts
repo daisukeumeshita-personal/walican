@@ -75,6 +75,18 @@ export async function addMember(groupId: string, _prevState: GroupActionState, f
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // オーナー確認
+  const { data: currentMember } = await supabase
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!currentMember || currentMember.role !== 'owner') {
+    return { error: 'グループのオーナーのみメンバーを追加できます' }
+  }
+
   // 2人制限チェック
   const { count: memberCount } = await supabase
     .from('group_members')
@@ -178,6 +190,19 @@ export async function addMember(groupId: string, _prevState: GroupActionState, f
 
 export async function removeMember(groupId: string, userId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: currentMember } = await supabase
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!currentMember || currentMember.role !== 'owner') {
+    return { error: '権限がありません' }
+  }
 
   const { error } = await supabase
     .from('group_members')
@@ -195,6 +220,19 @@ export async function removeMember(groupId: string, userId: string) {
 
 export async function cancelInvitation(groupId: string, invitationId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: currentMember } = await supabase
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!currentMember || currentMember.role !== 'owner') {
+    return { error: '権限がありません' }
+  }
 
   const { error } = await supabase
     .from('group_invitations')
@@ -232,6 +270,19 @@ export async function updateGroup(groupId: string, name: string): Promise<GroupA
 
 export async function deleteGroup(groupId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: currentMember } = await supabase
+    .from('group_members')
+    .select('role')
+    .eq('group_id', groupId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!currentMember || currentMember.role !== 'owner') {
+    return { error: '権限がありません' }
+  }
 
   const { error } = await supabase
     .from('groups')
