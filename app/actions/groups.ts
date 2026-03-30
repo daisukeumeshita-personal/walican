@@ -210,6 +210,26 @@ export async function cancelInvitation(groupId: string, invitationId: string) {
   return null
 }
 
+export async function updateGroup(groupId: string, name: string): Promise<GroupActionState> {
+  const trimmed = name.trim()
+  if (!trimmed) return { error: 'グループ名を入力してください' }
+  if (trimmed.length > 50) return { error: 'グループ名は50文字以内で入力してください' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('groups')
+    .update({ name: trimmed })
+    .eq('id', groupId)
+
+  if (error) return { error: 'グループ名の更新に失敗しました' }
+
+  revalidatePath(`/groups/${groupId}`)
+  return null
+}
+
 export async function deleteGroup(groupId: string) {
   const supabase = await createClient()
 
