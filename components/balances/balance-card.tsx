@@ -36,9 +36,10 @@ export function BalanceCard({ debts, currentUserId }: BalanceCardProps) {
               </svg>
               <span className="font-500 text-foreground">{debt.to.name}</span>
             </div>
-            <span className={`font-600 text-sm tabular-nums tracking-tight ${amountColor}`}>
-              {formatCurrency(debt.amount)}
-            </span>
+            <div className={`flex flex-col items-end ${amountColor}`}>
+              <span className="text-xs">{isBorrower ? '借りた合計' : '貸した合計'}</span>
+              <span className="font-600 text-sm tabular-nums tracking-tight">{formatCurrency(debt.amount)}</span>
+            </div>
           </div>
         )
       })}
