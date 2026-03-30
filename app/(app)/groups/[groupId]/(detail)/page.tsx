@@ -5,8 +5,6 @@ import { getShoppingItems } from '@/lib/data/shopping'
 import { getCurrentUser } from '@/lib/data/profiles'
 import { BalanceCard } from '@/components/balances/balance-card'
 import { ExpenseList } from '@/components/expenses/expense-list'
-import { ShoppingList } from '@/components/shopping/shopping-list'
-import { AddItemForm } from '@/components/shopping/add-item-form'
 import { ShoppingBottomSheet } from '@/components/shopping/shopping-bottom-sheet'
 
 export default async function GroupOverviewPage({
@@ -24,24 +22,7 @@ export default async function GroupOverviewPage({
 
   return (
     <>
-      {/* PC: 2カラム */}
-      <div className="hidden md:grid md:grid-cols-[1fr_320px] md:gap-8 md:items-start">
-        <MainContent groupId={groupId} debts={debts} expenses={expenses} currentUserId={user.id} />
-        <aside className="sticky top-6 bg-card rounded-2xl border border-border/60 p-5">
-          <div className="flex flex-col gap-4">
-            <h2 className="text-xs font-semibold tracking-[0.08em] uppercase text-muted">買い物メモ</h2>
-            <AddItemForm groupId={groupId} />
-            <ShoppingList items={shoppingItems as any} groupId={groupId} />
-          </div>
-        </aside>
-      </div>
-
-      {/* スマホ: 1カラム */}
-      <div className="md:hidden">
-        <MainContent groupId={groupId} debts={debts} expenses={expenses} currentUserId={user.id} />
-      </div>
-
-      {/* スマホ用ボトムシート */}
+      <MainContent groupId={groupId} debts={debts} expenses={expenses} currentUserId={user.id} />
       <ShoppingBottomSheet items={shoppingItems as any} groupId={groupId} />
     </>
   )
