@@ -51,15 +51,13 @@ export function ExpenseForm({ groupId, members, currentUserId }: ExpenseFormProp
     }
   }
 
-  // プレビュー文言
+  // プレビュー文言（常に「支払者が X円 支払い、相手に Y円 貸します」形式）
   const getPreview = () => {
     if (totalAmount <= 0 || !otherMember || !payerMember) return null
-    if (splitMode === 'half') {
-      const half = Math.floor(totalAmount / 2)
-      return `${payerMember.profile.display_name}・${otherMember.profile.display_name} それぞれ ${formatCurrency(half)}`
-    } else {
-      return `${otherMember.profile.display_name} が ${formatCurrency(totalAmount)} を全額返す`
-    }
+    const lentAmount = splitMode === 'half'
+      ? Math.floor(totalAmount / 2)
+      : totalAmount
+    return `${payerMember.profile.display_name}が ${totalAmount.toLocaleString()}円 支払い、${otherMember.profile.display_name}に ${lentAmount.toLocaleString()}円 貸します`
   }
 
   const handleSubmit = async () => {
@@ -166,8 +164,7 @@ export function ExpenseForm({ groupId, members, currentUserId }: ExpenseFormProp
                 : 'text-muted hover:text-foreground'
             )}
           >
-            半分ずつ
-            <span className="text-xs ml-1 opacity-60">50%</span>
+            半分立て替える
           </button>
           <button
             type="button"
@@ -179,8 +176,7 @@ export function ExpenseForm({ groupId, members, currentUserId }: ExpenseFormProp
                 : 'text-muted hover:text-foreground'
             )}
           >
-            まるごと
-            <span className="text-xs ml-1 opacity-60">100%</span>
+            全額立て替える
           </button>
         </div>
       </div>
