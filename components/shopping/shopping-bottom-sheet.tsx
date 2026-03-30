@@ -17,10 +17,10 @@ export function ShoppingBottomSheet({ items, groupId }: ShoppingBottomSheetProps
 
   return (
     <>
-      {/* 固定バー（モバイルのみ） */}
+      {/* 固定バー */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-card border-t border-border/60 px-5 py-3.5 flex items-center justify-between active:bg-surface transition-colors"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/60 px-5 py-3.5 flex items-center justify-between active:bg-surface transition-colors"
       >
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,11 +40,11 @@ export function ShoppingBottomSheet({ items, groupId }: ShoppingBottomSheetProps
         </div>
       </button>
 
-      {/* ドロワー（モバイルのみ） */}
+      {/* ドロワー */}
       <Drawer.Root open={open} onOpenChange={setOpen}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40 md:hidden" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-card rounded-t-2xl border-t border-border/60 shadow-xl md:hidden focus:outline-none" style={{ maxHeight: '90dvh' }}>
+          <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-card rounded-t-2xl border-t border-border/60 shadow-xl focus:outline-none" style={{ maxHeight: '90dvh' }}>
             <div className="mx-auto w-10 h-1 rounded-full bg-border mt-3 mb-1 shrink-0" />
             <div className="overflow-y-auto px-4 pb-10 pt-2 flex-1">
               <div className="flex items-center justify-between mb-4">
