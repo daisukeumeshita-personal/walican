@@ -8,7 +8,18 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    redirect('/groups')
+    const { data: memberships } = await supabase
+      .from('group_members')
+      .select('group_id, joined_at')
+      .eq('user_id', user.id)
+      .order('joined_at', { ascending: false })
+      .limit(1)
+
+    if (memberships && memberships.length > 0) {
+      redirect(`/groups/${memberships[0].group_id}`)
+    } else {
+      redirect('/groups/new')
+    }
   }
 
   return (
