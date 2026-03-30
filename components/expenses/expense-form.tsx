@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { createExpense } from '@/app/actions/expenses'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import type { Profile } from '@/lib/types/database'
 
-type SplitMethod = 'equal' | 'exact' | 'percentage'
+type SplitMode = 'half' | 'all'
 
 interface MemberWithProfile {
   user_id: string
@@ -24,93 +24,52 @@ export function ExpenseForm({ groupId, members, currentUserId }: ExpenseFormProp
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [paidBy, setPaidBy] = useState(currentUserId)
-  const [splitMethod, setSplitMethod] = useState<SplitMethod>('equal')
-  const [exactAmounts, setExactAmounts] = useState<Record<string, string>>({})
-  const [percentages, setPercentages] = useState<Record<string, string>>({})
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(members.map(m => m.user_id))
+  const [splitMode, setSplitMode] = useState<SplitMode>('half')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   const totalAmount = parseInt(amount) || 0
+  const otherMember = members.find(m => m.user_id !== paidBy)
+  const payerMember = members.find(m => m.user_id === paidBy)
 
-  const toggleMember = (userId: string) => {
-    setSelectedMembers(prev =>
-      prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    )
+  // スプリット計算
+  const getSplits = () => {
+    if (!otherMember) return []
+    if (splitMode === 'half') {
+      const half = Math.floor(totalAmount / 2)
+      const remainder = totalAmount - half * 2
+      return [
+        { userId: paidBy, amount: half + remainder },
+        { userId: otherMember.user_id, amount: half },
+      ]
+    } else {
+      // まるごと: 支払者の負担=0、相手の負担=全額
+      return [
+        { userId: paidBy, amount: 0, percentage: 0 },
+        { userId: otherMember.user_id, amount: totalAmount, percentage: 100 },
+      ]
+    }
   }
 
-  const getEqualSplit = () => {
-    if (selectedMembers.length === 0) return {}
-    const base = Math.floor(totalAmount / selectedMembers.length)
-    const remainder = totalAmount - base * selectedMembers.length
-    const splits: Record<string, number> = {}
-    selectedMembers.forEach((id, i) => {
-      splits[id] = base + (i < remainder ? 1 : 0)
-    })
-    return splits
-  }
-
-  const getExactTotal = () => {
-    return selectedMembers.reduce((sum, id) => sum + (parseInt(exactAmounts[id]) || 0), 0)
-  }
-
-  const getPercentageTotal = () => {
-    return selectedMembers.reduce((sum, id) => sum + (parseFloat(percentages[id]) || 0), 0)
+  // プレビュー文言
+  const getPreview = () => {
+    if (totalAmount <= 0 || !otherMember || !payerMember) return null
+    if (splitMode === 'half') {
+      const half = Math.floor(totalAmount / 2)
+      return `${payerMember.profile.display_name}・${otherMember.profile.display_name} それぞれ ${formatCurrency(half)}`
+    } else {
+      return `${otherMember.profile.display_name} が ${formatCurrency(totalAmount)} を全額返す`
+    }
   }
 
   const handleSubmit = async () => {
     setError('')
+    if (!description.trim()) { setError('内容を入力してください'); return }
+    if (totalAmount <= 0) { setError('金額を入力してください'); return }
+    if (members.length < 2) { setError('メンバーが2人必要です'); return }
 
-    if (!description.trim()) {
-      setError('内容を入力してください')
-      return
-    }
-    if (totalAmount <= 0) {
-      setError('金額を入力してください')
-      return
-    }
-    if (selectedMembers.length === 0) {
-      setError('少なくとも1人のメンバーを選択してください')
-      return
-    }
-
-    let splits: { userId: string; amount: number; percentage?: number }[]
-
-    if (splitMethod === 'equal') {
-      const equalSplits = getEqualSplit()
-      splits = selectedMembers.map(id => ({
-        userId: id,
-        amount: equalSplits[id],
-      }))
-    } else if (splitMethod === 'exact') {
-      const exactTotal = getExactTotal()
-      if (exactTotal !== totalAmount) {
-        setError(`金額の合計が一致しません（合計: ${exactTotal}円 / 支払額: ${totalAmount}円）`)
-        return
-      }
-      splits = selectedMembers.map(id => ({
-        userId: id,
-        amount: parseInt(exactAmounts[id]) || 0,
-      }))
-    } else {
-      const percentTotal = getPercentageTotal()
-      if (Math.abs(percentTotal - 100) > 0.01) {
-        setError(`割合の合計が100%になりません（合計: ${percentTotal}%）`)
-        return
-      }
-      let remaining = totalAmount
-      const sortedMembers = [...selectedMembers]
-      splits = sortedMembers.map((id, i) => {
-        const pct = parseFloat(percentages[id]) || 0
-        const amt = i === sortedMembers.length - 1
-          ? remaining
-          : Math.round(totalAmount * pct / 100)
-        remaining -= amt
-        return { userId: id, amount: amt, percentage: pct }
-      })
-    }
+    const splits = getSplits()
+    const splitMethod = splitMode === 'half' ? 'equal' : 'percentage'
 
     setSubmitting(true)
     try {
@@ -121,180 +80,126 @@ export function ExpenseForm({ groupId, members, currentUserId }: ExpenseFormProp
         splitMethod,
         splits,
       })
-
       if (result?.error) {
         setError(result.error)
         setSubmitting(false)
       }
     } catch (e) {
-      // redirect() throws a NEXT_REDIRECT error — this is expected on success
       throw e
     }
   }
 
-  const splitMethodLabels: Record<SplitMethod, string> = {
-    equal: '均等割り',
-    exact: '金額指定',
-    percentage: '割合指定',
-  }
+  const preview = getPreview()
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {error && (
         <div className="bg-danger-light text-danger text-sm p-3 rounded-xl border border-danger/10">
           {error}
         </div>
       )}
 
+      {/* 内容 */}
       <Input
         label="内容"
         value={description}
         onChange={e => setDescription(e.target.value)}
-        placeholder="例: ランチ代"
+        placeholder="例: スーパーの買い物"
+        autoFocus
       />
 
-      <Input
-        label="金額（円）"
-        type="number"
-        value={amount}
-        onChange={e => setAmount(e.target.value)}
-        placeholder="0"
-        min="1"
-      />
-
+      {/* 金額 */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium tracking-wide uppercase text-muted">支払者</label>
-        <select
-          value={paidBy}
-          onChange={e => setPaidBy(e.target.value)}
-          className="px-4 py-3 rounded-xl border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/20 transition-colors duration-200"
-        >
-          {members.map(m => (
-            <option key={m.user_id} value={m.user_id}>
-              {m.profile.display_name}{m.user_id === currentUserId ? '（あなた）' : ''}
-            </option>
-          ))}
-        </select>
+        <label className="text-xs font-medium tracking-wide uppercase text-muted">金額（円）</label>
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted text-sm">¥</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            placeholder="0"
+            min="1"
+            className="w-full pl-8 pr-4 py-3 rounded-xl border border-border bg-card text-foreground text-lg font-semibold tabular-nums placeholder:text-muted/40 focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/20 transition-colors duration-200"
+          />
+        </div>
       </div>
 
-      <div>
-        <label className="text-xs font-medium tracking-wide uppercase text-muted mb-2.5 block">分配方法</label>
-        <div className="flex gap-1.5 p-1 rounded-full bg-surface">
-          {(Object.keys(splitMethodLabels) as SplitMethod[]).map(method => (
+      {/* 支払者 */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium tracking-wide uppercase text-muted">支払者</label>
+        <div className="flex gap-2">
+          {members.map(m => (
             <button
-              key={method}
+              key={m.user_id}
               type="button"
-              onClick={() => setSplitMethod(method)}
+              onClick={() => setPaidBy(m.user_id)}
               className={cn(
-                'flex-1 px-3 py-2 text-sm font-medium rounded-full transition-colors duration-200 cursor-pointer',
-                splitMethod === method
-                  ? 'bg-foreground text-background shadow-sm'
-                  : 'text-muted hover:text-foreground'
+                'flex-1 py-3 px-4 rounded-xl border text-sm font-medium transition-colors duration-200 cursor-pointer',
+                paidBy === m.user_id
+                  ? 'bg-foreground text-background border-foreground shadow-sm'
+                  : 'bg-card text-muted border-border hover:border-foreground/30 hover:text-foreground'
               )}
             >
-              {splitMethodLabels[method]}
+              {m.profile.display_name}
+              {m.user_id === currentUserId && (
+                <span className={cn('text-xs ml-1', paidBy === m.user_id ? 'opacity-60' : 'text-muted/60')}>
+                  （あなた）
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      <div>
-        <label className="text-xs font-medium tracking-wide uppercase text-muted mb-2.5 block">メンバー</label>
-        <div className="flex flex-col gap-1.5">
-          {members.map(m => {
-            const isSelected = selectedMembers.includes(m.user_id)
-            const equalSplits = getEqualSplit()
-
-            return (
-              <div
-                key={m.user_id}
-                className={cn(
-                  'flex items-center gap-3 p-3.5 rounded-xl border transition-colors duration-200',
-                  isSelected ? 'border-foreground/15 bg-card' : 'border-border/40 bg-surface/50 opacity-50'
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleMember(m.user_id)}
-                  className="w-4 h-4 accent-primary rounded cursor-pointer"
-                />
-                <span className="text-sm font-500 flex-1 tracking-tight">
-                  {m.profile.display_name}
-                </span>
-
-                {isSelected && splitMethod === 'equal' && totalAmount > 0 && (
-                  <span className="text-sm text-muted tabular-nums">
-                    {equalSplits[m.user_id]?.toLocaleString()}円
-                  </span>
-                )}
-
-                {isSelected && splitMethod === 'exact' && (
-                  <input
-                    type="number"
-                    value={exactAmounts[m.user_id] || ''}
-                    onChange={e => setExactAmounts(prev => ({ ...prev, [m.user_id]: e.target.value }))}
-                    placeholder="0"
-                    min="0"
-                    className="w-24 px-3 py-1.5 text-sm text-right rounded-lg border border-border bg-card focus:outline-none focus:ring-1 focus:ring-foreground/10 tabular-nums"
-                  />
-                )}
-
-                {isSelected && splitMethod === 'percentage' && (
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      value={percentages[m.user_id] || ''}
-                      onChange={e => setPercentages(prev => ({ ...prev, [m.user_id]: e.target.value }))}
-                      placeholder="0"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      className="w-20 px-3 py-1.5 text-sm text-right rounded-lg border border-border bg-card focus:outline-none focus:ring-1 focus:ring-foreground/10 tabular-nums"
-                    />
-                    <span className="text-xs text-muted">%</span>
-                    {totalAmount > 0 && percentages[m.user_id] && (
-                      <span className="text-[11px] text-muted/70 ml-0.5 tabular-nums">
-                        {Math.round(totalAmount * (parseFloat(percentages[m.user_id]) || 0) / 100).toLocaleString()}円
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
+      {/* 立て替え方法 */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs font-medium tracking-wide uppercase text-muted">立て替え方法</label>
+        <div className="flex gap-2 p-1 rounded-xl bg-surface">
+          <button
+            type="button"
+            onClick={() => setSplitMode('half')}
+            className={cn(
+              'flex-1 py-3 rounded-lg text-sm font-medium transition-colors duration-200 cursor-pointer',
+              splitMode === 'half'
+                ? 'bg-card text-foreground shadow-sm border border-border/60'
+                : 'text-muted hover:text-foreground'
+            )}
+          >
+            半分ずつ
+            <span className="text-xs ml-1 opacity-60">50%</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSplitMode('all')}
+            className={cn(
+              'flex-1 py-3 rounded-lg text-sm font-medium transition-colors duration-200 cursor-pointer',
+              splitMode === 'all'
+                ? 'bg-card text-foreground shadow-sm border border-border/60'
+                : 'text-muted hover:text-foreground'
+            )}
+          >
+            まるごと
+            <span className="text-xs ml-1 opacity-60">100%</span>
+          </button>
         </div>
-
-        {splitMethod === 'exact' && totalAmount > 0 && (
-          <p className={cn(
-            'text-xs mt-2.5 tabular-nums',
-            getExactTotal() === totalAmount ? 'text-primary' : 'text-danger'
-          )}>
-            {getExactTotal().toLocaleString()} / {totalAmount.toLocaleString()}円
-            {getExactTotal() !== totalAmount && ` （残り${(totalAmount - getExactTotal()).toLocaleString()}円）`}
-          </p>
-        )}
-        {splitMethod === 'percentage' && (
-          <p className={cn(
-            'text-xs mt-2.5 tabular-nums',
-            Math.abs(getPercentageTotal() - 100) < 0.01 ? 'text-primary' : 'text-danger'
-          )}>
-            {getPercentageTotal()}% / 100%
-          </p>
-        )}
       </div>
 
-      {members.length === 0 && (
-        <div className="bg-accent-light text-accent text-sm p-3 rounded-xl border border-accent/10">
-          メンバーが見つかりません。グループにメンバーが追加されているか確認してください。
+      {/* プレビュー */}
+      {preview && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-primary-light/40 border border-primary/10">
+          <svg className="w-3.5 h-3.5 text-primary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-xs text-primary">{preview}</p>
         </div>
       )}
 
       <Button
         type="button"
         onClick={handleSubmit}
-        disabled={submitting || members.length === 0}
-        className="w-full h-12 text-base mt-2"
+        disabled={submitting || members.length < 2}
+        className="w-full h-12 text-base mt-1"
       >
         {submitting ? '追加中...' : '支出を追加'}
       </Button>

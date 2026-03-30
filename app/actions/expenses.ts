@@ -67,7 +67,7 @@ export async function createExpense(
   }
 
   revalidatePath(`/groups/${groupId}`)
-  redirect(`/groups/${groupId}/expenses`)
+  redirect(`/groups/${groupId}`)
 }
 
 export async function deleteExpense(groupId: string, expenseId: string): Promise<ExpenseActionState> {
