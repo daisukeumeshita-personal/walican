@@ -18,7 +18,7 @@ export default async function Home() {
     if (memberships && memberships.length > 0) {
       redirect(`/groups/${memberships[0].group_id}`)
     } else {
-      redirect('/groups/new')
+      redirect('/groups')
     }
   }
 
