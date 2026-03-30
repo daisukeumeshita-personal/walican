@@ -37,7 +37,8 @@ export default async function Home() {
             Hanbun
           </h1>
           <p className="text-lg text-muted mt-3 leading-relaxed font-light">
-            日々の買い物やデート、家賃の支払いまで。<br />
+            日々の買い物やデート、<br />
+            家賃の支払いまで。<br />
             ふたりの貸し借りをシンプルに。
           </p>
         </div>
