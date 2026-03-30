@@ -64,7 +64,7 @@ function MainContent({
         <h2 className="text-xs font-semibold tracking-[0.08em] uppercase text-muted mb-3">
           精算が必要な支払い
         </h2>
-        <BalanceCard debts={debts} />
+        <BalanceCard debts={debts} currentUserId={currentUserId} />
       </section>
 
       <section>
