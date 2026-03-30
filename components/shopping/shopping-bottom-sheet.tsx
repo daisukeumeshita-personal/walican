@@ -20,8 +20,9 @@ export function ShoppingBottomSheet({ items, groupId }: ShoppingBottomSheetProps
       {/* 固定バー */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/60 px-5 py-3.5 flex items-center justify-between active:bg-surface transition-colors"
+        className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/60 active:bg-surface transition-colors"
       >
+        <div className="max-w-2xl mx-auto w-full px-5 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -37,6 +38,7 @@ export function ShoppingBottomSheet({ items, groupId }: ShoppingBottomSheetProps
           <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
           </svg>
+        </div>
         </div>
       </button>
 
