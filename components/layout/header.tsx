@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { LogoutButton } from './logout-button'
+import { ProfileNameEditor } from './profile-name-editor'
 
 export async function Header() {
   const supabase = await createClient()
@@ -21,9 +22,7 @@ export async function Header() {
           ワリカン
         </Link>
         <div className="flex items-center gap-4">
-          <span className="text-xs text-muted tracking-wide">
-            {profile?.display_name || user.email}
-          </span>
+          <ProfileNameEditor displayName={profile?.display_name || user.email || ''} />
           <LogoutButton />
         </div>
       </div>

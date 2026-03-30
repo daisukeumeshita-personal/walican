@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { loginSchema, signupSchema } from '@/lib/validations/auth'
 
 export type AuthState = {
@@ -116,6 +117,26 @@ export async function signup(_prevState: AuthState, formData: FormData): Promise
   }
 
   redirect('/groups')
+}
+
+export async function updateProfile(displayName: string): Promise<AuthState> {
+  const trimmed = displayName.trim()
+  if (!trimmed) return { error: '名前を入力してください' }
+  if (trimmed.length > 30) return { error: '名前は30文字以内で入力してください' }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ display_name: trimmed })
+    .eq('id', user.id)
+
+  if (error) return { error: '名前の更新に失敗しました' }
+
+  revalidatePath('/', 'layout')
+  return null
 }
 
 export async function logout() {
