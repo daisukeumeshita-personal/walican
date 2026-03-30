@@ -9,9 +9,9 @@ export default function AuthLayout({
       <div className="w-full max-w-sm relative z-10">
         <div className="mb-10 animate-fade-up">
           <h1 className="font-display text-3xl font-700 tracking-tight text-foreground">
-            ワリカン
+            Hanbun
           </h1>
-          <p className="text-muted text-sm mt-1 font-light">グループ支出管理</p>
+          <p className="text-muted text-sm mt-1 font-light">ふたりの精算アプリ</p>
         </div>
         <div className="animate-fade-up stagger-1">
           {children}

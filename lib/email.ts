@@ -14,13 +14,13 @@ export async function sendInvitationEmail(
   const resend = new Resend(process.env.RESEND_API_KEY)
 
   const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || 'ワリカン <onboarding@resend.dev>',
+    from: process.env.RESEND_FROM_EMAIL || 'Hanbun <onboarding@resend.dev>',
     to,
     subject: `${inviterName} さんから「${groupName}」への招待`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px;">
-        <h1 style="font-size: 24px; font-weight: 700; color: #111; margin-bottom: 8px;">ワリカン</h1>
-        <p style="color: #666; font-size: 14px; margin-bottom: 32px;">グループ支出管理</p>
+        <h1 style="font-size: 24px; font-weight: 700; color: #111; margin-bottom: 8px;">Hanbun</h1>
+        <p style="color: #666; font-size: 14px; margin-bottom: 32px;">ふたりの精算アプリ</p>
 
         <div style="background: #f8f8f8; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
           <p style="color: #333; font-size: 16px; margin: 0 0 8px;">

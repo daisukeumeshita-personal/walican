@@ -22,8 +22,8 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "ワリカン - グループ支出管理",
-  description: "グループでの支出を簡単に管理・精算できるアプリ",
+  title: "Hanbun - ふたりの精算アプリ",
+  description: "ふたりの貸し借りをシンプルに管理できるアプリ",
 };
 
 export default function RootLayout({
