@@ -75,6 +75,16 @@ export async function addMember(groupId: string, _prevState: GroupActionState, f
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // 2人制限チェック
+  const { count: memberCount } = await supabase
+    .from('group_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('group_id', groupId)
+
+  if ((memberCount ?? 0) >= 2) {
+    return { error: 'このグループはすでに2人のメンバーがいます。3人以上は追加できません。' }
+  }
+
   const email = result.data.email.toLowerCase()
 
   // Find user by email (case-insensitive)
